@@ -3,9 +3,8 @@ package provider
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	resourceSchema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -33,11 +32,11 @@ func (r *DnssecResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manage a DNSSEC record for your domain",
 
-		Attributes: map[string]resourceSchema.Attribute{
-			"domain": resourceSchema.StringAttribute{
+		Attributes: map[string]schema.Attribute{
+			"domain": schema.StringAttribute{
 				Required: true,
 			},
-			"enabled": resourceSchema.BoolAttribute{
+			"enabled": schema.BoolAttribute{
 				MarkdownDescription: "Wheter or not to activate dnssec record",
 				Required:            true,
 			},
