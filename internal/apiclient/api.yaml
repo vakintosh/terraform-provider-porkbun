@@ -324,6 +324,9 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/DnsRecord"
+  # /v3/dns/createDnssecRecord/{domain}:
+  # /v3/dns/getDnssecRecords/{domain}:
+  # /v3/dns/deleteDnssecRecord/{domain}:
 components:
   parameters:
     domainPath:
