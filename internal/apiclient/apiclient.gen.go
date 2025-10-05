@@ -137,6 +137,46 @@ type DomainUpdateNameServersJSONBody struct {
 	Secretapikey string   `json:"secretapikey"`
 }
 
+// DnssecCreateRecordJSONBody defines the structure for a single DNSSEC record entry.
+type DnssecCreateRecordJSONBody struct {
+	Apikey          string `json:"apikey"`
+	Secretapikey    string `json:"secretapikey"`
+	KeyTag          string `json:"keyTag"`
+	Alg             string `json:"alg"`
+	DigestType      string `json:"digestType"`
+	Digest          string `json:"digest"`
+	MaxSigLife      string `json:"maxSigLife"`
+	KeyDataFlags    string `json:"keyFlags"`
+	KeyDataProtocol string `json:"keyProtocol"`
+	KeyDataAlgo     string `json:"keyAlgo"`
+	KeyDataPubKey   string `json:"keyPubKey"`
+}
+
+// DnssecCreateRecordsResponse defines the model for the DNSSEC Create Records response.
+type DnssecCreateRecordsResponse struct {
+	Status string `json:"status"`
+}
+
+// DnssecGetRecord defines the model for a DNSSEC record.
+type DnssecGetRecord struct {
+	Domain          *string `json:"domain,omitempty"`
+	KeyTag          string  `json:"keyTag"`
+	Alg             string  `json:"alg"`
+	DigestType      string  `json:"digestType"`
+	Digest          string  `json:"digest"`
+	MaxSigLife      *string `json:"maxSigLife,omitempty"`
+	KeyDataFlags    *string `json:"keyFlags,omitempty"`
+	KeyDataProtocol *string `json:"keyProtocol,omitempty"`
+	KeyDataAlgo     *string `json:"keyAlgo,omitempty"`
+	KeyDataPubKey   *string `json:"keyPubKey,omitempty"`
+}
+
+// DnssecGetRecordsResponse defines the model for the DNSSEC Get Records response.
+type DnssecGetRecordsResponse struct {
+	Status  string                     `json:"status"`
+	Records map[string]DnssecGetRecord `json:"records"`
+}
+
 // DnsCreateRecordJSONRequestBody defines body for DnsCreateRecord for application/json ContentType.
 type DnsCreateRecordJSONRequestBody DnsCreateRecordJSONBody
 
@@ -160,6 +200,12 @@ type DnsRetrieveRecordsByDomainAndTypeAndSubdomainJSONRequestBody = ApiKeyAndSec
 
 // DomainGetNameServersJSONRequestBody defines body for DomainGetNameServers for application/json ContentType.
 type DomainGetNameServersJSONRequestBody = ApiKeyAndSecretKey
+
+// DnssecCreateRecordsJSONRequestBody defines body for DnssecCreateRecords for application/json ContentType.
+type DnssecCreateRecordsJSONRequestBody DnssecCreateRecordJSONBody
+
+// DnssecGetRecordsJSONRequestBody defines the body for DnssecGetRecords for application/json ContentType.
+type DnssecGetRecordsJSONRequestBody = ApiKeyAndSecretKey
 
 // DomainListAllJSONRequestBody defines body for DomainListAll for application/json ContentType.
 type DomainListAllJSONRequestBody DomainListAllJSONBody
@@ -537,6 +583,17 @@ type ClientInterface interface {
 	DomainUpdateNameServersWithBody(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	DomainUpdateNameServers(ctx context.Context, domain DomainPath, body DomainUpdateNameServersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DnssecCreateRecordsWithBody request with any body
+	DnssecCreateRecordsWithBody(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	DnssecCreateRecords(ctx context.Context, domain DomainPath, body DnssecCreateRecordsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DnssecGetRecordsWithBody request with any body
+	DnssecGetRecordsWithBody(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DnssecGetRecords request with the standard JSON body
+	DnssecGetRecords(ctx context.Context, domain DomainPath, body DnssecGetRecordsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) DnsCreateRecordWithBody(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -769,6 +826,54 @@ func (c *Client) DomainUpdateNameServersWithBody(ctx context.Context, domain Dom
 
 func (c *Client) DomainUpdateNameServers(ctx context.Context, domain DomainPath, body DomainUpdateNameServersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDomainUpdateNameServersRequest(c.Server, domain, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DnssecCreateRecordsWithBody(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDnssecCreateRecordsRequestWithBody(c.Server, domain, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DnssecCreateRecords(ctx context.Context, domain DomainPath, body DnssecCreateRecordsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDnssecCreateRecordsRequest(c.Server, domain, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DnssecGetRecordsWithBody(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDnssecGetRecordsRequestWithBody(c.Server, domain, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DnssecGetRecords(ctx context.Context, domain DomainPath, body DnssecGetRecordsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDnssecGetRecordsRequest(c.Server, domain, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1284,6 +1389,100 @@ func NewDomainUpdateNameServersRequestWithBody(server string, domain DomainPath,
 	return req, nil
 }
 
+// NewDnssecCreateRecordsRequest calls the generic DnssecCreateRecords builder with application/json body
+func NewDnssecCreateRecordsRequest(server string, domain DomainPath, body DnssecCreateRecordsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDnssecCreateRecordsRequestWithBody(server, domain, "application/json", bodyReader)
+}
+
+// NewDnssecCreateRecordsRequestWithBody generates requests for DnssecCreateRecords with any type of body
+func NewDnssecCreateRecordsRequestWithBody(server string, domain DomainPath, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "domain", runtime.ParamLocationPath, domain)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v3/dns/createDnssecRecords/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDnssecGetRecordsRequest calls the generic DnssecGetRecords builder with application/json body
+func NewDnssecGetRecordsRequest(server string, domain DomainPath, body DnssecGetRecordsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDnssecGetRecordsRequestWithBody(server, domain, "application/json", bodyReader)
+}
+
+// NewDnssecGetRecordsRequestWithBody generates requests for DnssecGetRecords with any type of body
+func NewDnssecGetRecordsRequestWithBody(server string, domain DomainPath, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "domain", runtime.ParamLocationPath, domain)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v3/dns/getDnssecRecords/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -1376,6 +1575,16 @@ type ClientWithResponsesInterface interface {
 	DomainUpdateNameServersWithBodyWithResponse(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DomainUpdateNameServersResp, error)
 
 	DomainUpdateNameServersWithResponse(ctx context.Context, domain DomainPath, body DomainUpdateNameServersJSONRequestBody, reqEditors ...RequestEditorFn) (*DomainUpdateNameServersResp, error)
+
+	// DnssecCreateRecordsWithBodyWithResponse request with any body
+	DnssecCreateRecordsWithBodyWithResponse(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DnssecCreateRecordsResp, error)
+
+	DnssecCreateRecordsWithResponse(ctx context.Context, domain DomainPath, body DnssecCreateRecordsJSONRequestBody, reqEditors ...RequestEditorFn) (*DnssecCreateRecordsResp, error)
+
+	// DnssecGetRecordsWithBodyWithResponse request with any body
+	DnssecGetRecordsWithBodyWithResponse(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DnssecGetRecordsResp, error)
+
+	DnssecGetRecordsWithResponse(ctx context.Context, domain DomainPath, body DnssecGetRecordsJSONRequestBody, reqEditors ...RequestEditorFn) (*DnssecGetRecordsResp, error)
 }
 
 type DnsCreateRecordResp struct {
@@ -1619,6 +1828,52 @@ func (r DomainUpdateNameServersResp) StatusCode() int {
 	return 0
 }
 
+type DnssecCreateRecordsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Status string `json:"status"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r DnssecCreateRecordsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DnssecCreateRecordsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DnssecGetRecordsResp struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DnssecGetRecordsResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DnssecGetRecordsResp) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DnssecGetRecordsResp) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // DnsCreateRecordWithBodyWithResponse request with arbitrary body returning *DnsCreateRecordResp
 func (c *ClientWithResponses) DnsCreateRecordWithBodyWithResponse(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DnsCreateRecordResp, error) {
 	rsp, err := c.DnsCreateRecordWithBody(ctx, domain, contentType, body, reqEditors...)
@@ -1787,6 +2042,40 @@ func (c *ClientWithResponses) DomainUpdateNameServersWithResponse(ctx context.Co
 		return nil, err
 	}
 	return ParseDomainUpdateNameServersResp(rsp)
+}
+
+// DnssecCreateRecordsWithBodyWithResponse request with arbitrary body returning *DnssecCreateRecordsResp
+func (c *ClientWithResponses) DnssecCreateRecordsWithBodyWithResponse(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DnssecCreateRecordsResp, error) {
+	rsp, err := c.DnssecCreateRecordsWithBody(ctx, domain, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDnssecCreateRecordsResp(rsp)
+}
+
+func (c *ClientWithResponses) DnssecCreateRecordsWithResponse(ctx context.Context, domain DomainPath, body DnssecCreateRecordsJSONRequestBody, reqEditors ...RequestEditorFn) (*DnssecCreateRecordsResp, error) {
+	rsp, err := c.DnssecCreateRecords(ctx, domain, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDnssecCreateRecordsResp(rsp)
+}
+
+// DnssecGetRecordsWithBodyWithResponse request with arbitrary body returning *DnssecGetRecordsResp
+func (c *ClientWithResponses) DnssecGetRecordsWithBodyWithResponse(ctx context.Context, domain DomainPath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DnssecGetRecordsResp, error) {
+	rsp, err := c.DnssecGetRecordsWithBody(ctx, domain, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDnssecGetRecordsResp(rsp)
+}
+
+func (c *ClientWithResponses) DnssecGetRecordsWithResponse(ctx context.Context, domain DomainPath, body DnssecGetRecordsJSONRequestBody, reqEditors ...RequestEditorFn) (*DnssecGetRecordsResp, error) {
+	rsp, err := c.DnssecGetRecords(ctx, domain, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDnssecGetRecordsResp(rsp)
 }
 
 // ParseDnsCreateRecordResp parses an HTTP response from a DnsCreateRecordWithResponse call
@@ -2065,6 +2354,58 @@ func ParseDomainUpdateNameServersResp(rsp *http.Response) (*DomainUpdateNameServ
 		}
 		response.JSON200 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseDnssecCreateRecordsResp parses an HTTP response from a DnssecCreateRecordsWithResponse call
+func ParseDnssecCreateRecordsResp(rsp *http.Response) (*DnssecCreateRecordsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DnssecCreateRecordsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Status string `json:"status"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+	}
+
+	return response, nil
+}
+
+// ParseDnssecGetRecordsResp parses an HTTP response from a DnssecGetRecordsWithResponse call
+func ParseDnssecGetRecordsResp(rsp *http.Response) (*DnssecGetRecordsResp, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DnssecGetRecordsResp{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DnssecGetRecordsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 	}
 
 	return response, nil
