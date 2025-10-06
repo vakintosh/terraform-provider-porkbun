@@ -9,8 +9,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/jianyuan/terraform-provider-porkbun/internal/apiclient"
 )
+
+type DnssecRecordResourceModel struct {
+	Domain types.String `tfsdk:"domain"`
+	KeyTag types.String `tfsdk:"key_tag"`
+	DnssecRecordModel
+}
 
 func NewDnssecRecordResource() resource.Resource {
 	return &DnssecRecordResource{}
@@ -85,17 +92,17 @@ func (r *DnssecRecordResource) Schema(ctx context.Context, req resource.SchemaRe
 }
 
 func (r *DnssecRecordResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data DnssecRecordModel
+	var data DnssecRecordResourceModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	createHttpResp, err := r.client.DnssecCreateRecordsWithResponse(
+	createHttpResp, err := r.client.DnssecCreateRecordWithResponse(
 		ctx,
 		data.Domain.ValueString(),
-		apiclient.DnssecCreateRecordsJSONRequestBody{
+		apiclient.DnssecCreateRecordJSONRequestBody{
 			Apikey:          r.apiKey,
 			Secretapikey:    r.secretKey,
 			KeyTag:          data.KeyTag.ValueString(),
@@ -122,7 +129,7 @@ func (r *DnssecRecordResource) Create(ctx context.Context, req resource.CreateRe
 }
 
 func (r *DnssecRecordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data DnssecRecordModel
+	var data DnssecRecordResourceModel
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -170,4 +177,37 @@ func (r *DnssecRecordResource) Read(ctx context.Context, req resource.ReadReques
 	// data.Digest = types.StringValue(record.Digest)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *DnssecRecordResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	resp.Diagnostics.AddError(
+		"Update Not Supported",
+		"Updating DNSSEC records is not supported by the Porkbun API. Please delete and recreate the resource if changes are needed.",
+	)
+}
+
+func (r *DnssecRecordResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data DnssecRecordResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	deleteResp, err := r.client.DnssecDeleteRecordByKeyTagWithResponse(
+		ctx,
+		data.Domain.ValueString(),
+		data.KeyTag.ValueString(),
+		apiclient.DnssecDeleteRecordJSONRequestBody{
+			Apikey:       r.apiKey,
+			Secretapikey: r.secretKey,
+		},
+	)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete DNSSEC record: %s", err))
+		return
+	} else if deleteResp.StatusCode() != http.StatusOK || deleteResp.JSON200 == nil || deleteResp.JSON200.Status != "SUCCESS" {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete DNSSEC record, got status code %d: %s", deleteResp.StatusCode(), string(deleteResp.Body)))
+		return
+	}
 }

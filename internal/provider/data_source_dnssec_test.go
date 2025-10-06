@@ -12,7 +12,9 @@ import (
 )
 
 func TestAccDnssecRecordsDataSource(t *testing.T) {
-	rn := "data.porkbun_dnssec_records.test"
+	rn := "data.porkbun_dnssec_record.test"
+	config := testAccDnssecRecordsDataSourceConfig()
+	t.Logf("Test config:\n%s", config)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.PreCheck(t) },
@@ -31,7 +33,7 @@ func TestAccDnssecRecordsDataSource(t *testing.T) {
 
 func testAccDnssecRecordsDataSourceConfig() string {
 	return fmt.Sprintf(`
-data "porkbun_dnssec_records" "test" {
+data "porkbun_dnssec_record" "test" {
     domain = "%[1]s"
 }
 `, acctest.TestDomain)

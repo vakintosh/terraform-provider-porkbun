@@ -324,23 +324,6 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/DnsRecord"
-  /v3/dns/getDnssecRecords/{domain}:
-    post:
-      operationId: dnssecGetRecords
-      parameters:
-        - $ref: "#/components/parameters/domainPath"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ApiKeyAndSecretKey"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DnssecGetRecordsResponse"
   /v3/dns/createDnssecRecord/{domain}:
     post:
       operationId: dnssecCreateRecord
@@ -354,14 +337,18 @@ paths:
                 - $ref: "#/components/schemas/ApiKeyAndSecretKey"
                 - type: object
                   required:
+                    - keyTag
                     - alg
                     - digestType
                     - digest
+                    - maxSigLife
                     - keyDataFlags
                     - keyDataProtocol
                     - keyDataAlgo
                     - keyDataPubKey
                   properties:
+                    keyTag:
+                      type: string
                     alg:
                       type: string
                     digestType:
@@ -390,12 +377,50 @@ paths:
                 properties:
                   status:
                     type: string
-  # /v3/dns/deleteDnssecRecord/{domain}:
-components:
-  parameters:
-    domainPath:
-      name: domain
-      in: path
+  /v3/dns/getDnssecRecords/{domain}:
+    post:
+      operationId: dnssecGetRecords
+      parameters:
+        - $ref: "#/components/parameters/domainPath"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiKeyAndSecretKey"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DnssecGetRecordsResponse"
+  /v3/dns/deleteDnssecRecord/{domain}/{keyTag}:
+    post:
+      operationId: dnssecDeleteRecord
+      parameters:
+        - $ref: "#/components/parameters/domainPath"
+        - name: keyTag
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiKeyAndSecretKey"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
       required: true
       schema:
         type: string
@@ -551,7 +576,6 @@ components:
           type: string
         keyDataPubKey:
           type: string
-
     DnssecGetRecordsResponse:
       type: object
       required:
