@@ -9,7 +9,7 @@ import (
 )
 
 type DnssecRecordModel struct {
-	KeyTag          types.String `tfsdk:"key_tag"`
+	Id              types.String `tfsdk:"id"`
 	Alg             types.String `tfsdk:"alg"`
 	DigestType      types.String `tfsdk:"digest_type"`
 	Digest          types.String `tfsdk:"digest"`
@@ -28,7 +28,7 @@ func coalesceString(s *string) string {
 }
 
 func (m *DnssecRecordModel) Fill(ctx context.Context, record apiclient.DnssecGetRecord) (diags diag.Diagnostics) {
-	m.KeyTag = types.StringValue(record.KeyTag)
+	m.Id = types.StringValue(record.Id)
 	m.Alg = types.StringValue(record.Alg)
 	m.DigestType = types.StringValue(record.DigestType)
 	m.Digest = types.StringValue(record.Digest)

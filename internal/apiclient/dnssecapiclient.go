@@ -194,6 +194,7 @@ func ParseDnssecCreateRecordResp(rsp *http.Response) (*DnssecCreateRecordResp, e
 
 // DnssecGetRecord defines the model for a DNSSEC record.
 type DnssecGetRecord struct {
+	Id           string `json:"id"`
 	Apikey       string `json:"apikey"`
 	Secretapikey string `json:"secretapikey"`
 	// Domain          *string `json:"domain,omitempty"`

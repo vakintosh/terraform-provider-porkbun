@@ -123,7 +123,7 @@ func (r *DnssecRecordResource) Create(ctx context.Context, req resource.CreateRe
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create DNSSEC record, got status code %d: %s", createHttpResp.StatusCode(), string(createHttpResp.Body)))
 		return
 	}
-	// data.ID = data.Domain.ValueString() + "-" + data.KeyTag.ValueString()
+	data.Id = types.StringValue(data.Domain.ValueString() + "-" + data.KeyTag.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
