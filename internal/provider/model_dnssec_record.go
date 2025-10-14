@@ -10,6 +10,7 @@ import (
 
 type DnssecRecordModel struct {
 	Id              types.String `tfsdk:"id"`
+	KeyTag          types.String `tfsdk:"key_tag"`
 	Alg             types.String `tfsdk:"alg"`
 	DigestType      types.String `tfsdk:"digest_type"`
 	Digest          types.String `tfsdk:"digest"`

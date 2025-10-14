@@ -15,7 +15,6 @@ import (
 
 type DnssecRecordResourceModel struct {
 	Domain types.String `tfsdk:"domain"`
-	KeyTag types.String `tfsdk:"key_tag"`
 	DnssecRecordModel
 }
 
@@ -130,7 +129,6 @@ func (r *DnssecRecordResource) Create(ctx context.Context, req resource.CreateRe
 
 func (r *DnssecRecordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data DnssecRecordResourceModel
-
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -152,29 +150,18 @@ func (r *DnssecRecordResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	resp.Diagnostics.Append(data.Fill(ctx, httpResp.JSON200.Records[data.KeyTag.ValueString()])...)
-	if resp.Diagnostics.HasError() {
+	record, ok := httpResp.JSON200.Records[data.KeyTag.ValueString()]
+	if !ok {
+		// Record not found remotely → mark as deleted
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
-	// var parsed struct {
-	// 	Status  string                            `json:"status"`
-	// 	Records map[string]apiclient.DnssecRecord `json:"records"`
-	// }
-	// if err := json.Unmarshal(httpResp.Body, &parsed); err != nil {
-	// 	resp.Diagnostics.AddError("Unmarshal Error", fmt.Sprintf("Failed to decode response: %s", err))
-	// 	return
-	// }
-
-	// record, ok := parsed.Records[data.KeyTag.ValueString()]
-	// if !ok {
-	// 	resp.State.RemoveResource(ctx)
-	// 	return
-	// }
-
-	// data.Alg = types.StringValue(record.Alg)
-	// data.DigestType = types.StringValue(record.DigestType)
-	// data.Digest = types.StringValue(record.Digest)
+	data.KeyTag = types.StringValue(data.KeyTag.ValueString()) // reassert for safety
+	resp.Diagnostics.Append(data.Fill(ctx, record)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

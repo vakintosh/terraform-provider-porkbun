@@ -32,7 +32,7 @@ func (d *DnssecRecordDataSource) Metadata(ctx context.Context, req datasource.Me
 
 func (d *DnssecRecordDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Provides a list of DNSSEC records for a given keytag.",
+		MarkdownDescription: "Provides a list of DNSSEC records for a given domain.",
 		Attributes: map[string]schema.Attribute{
 			"domain": schema.StringAttribute{
 				Required: true,
@@ -41,6 +41,9 @@ func (d *DnssecRecordDataSource) Schema(ctx context.Context, req datasource.Sche
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Computed: true,
+						},
 						"key_tag": schema.StringAttribute{
 							Computed: true,
 						},
@@ -100,9 +103,13 @@ func (d *DnssecRecordDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	records := make([]DnssecRecordModel, 0, len(httpResp.JSON200.Records))
-	for _, rec := range httpResp.JSON200.Records {
+	for id, rec := range httpResp.JSON200.Records {
 		var model DnssecRecordModel
 		model.Fill(ctx, rec)
+
+		model.KeyTag = types.StringValue(id)
+		model.Id = types.StringValue(id)
+
 		records = append(records, model)
 	}
 	data.Records = records
